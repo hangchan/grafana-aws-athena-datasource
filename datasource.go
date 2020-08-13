@@ -343,7 +343,15 @@ func (t *AwsAthenaDatasource) metricFindQuery(ctx context.Context, tsdbReq *data
 	data := make([]suggestData, 0)
 	switch subtype {
 	case "named_query_names":
-		li := &athena.ListNamedQueriesInput{}
+		var workGroupParam *string
+		workGroupParam = nil
+		if workGroup, ok := parameters.CheckGet("work_group"); ok {
+			temp := workGroup.MustString()
+			workGroupParam = &temp
+		}
+		li := &athena.ListNamedQueriesInput{
+			WorkGroup: workGroupParam,
+		}
 		lo := &athena.ListNamedQueriesOutput{}
 		err = svc.ListNamedQueriesPages(li,
 			func(page *athena.ListNamedQueriesOutput, lastPage bool) bool {
@@ -366,8 +374,16 @@ func (t *AwsAthenaDatasource) metricFindQuery(ctx context.Context, tsdbReq *data
 		}
 	case "named_query_queries":
 		pattern := parameters.Get("pattern").MustString()
+		var workGroupParam *string
+		workGroupParam = nil
+		if workGroup, ok := parameters.CheckGet("work_group"); ok {
+			temp := workGroup.MustString()
+			workGroupParam = &temp
+		}
 		r := regexp.MustCompile(pattern)
-		li := &athena.ListNamedQueriesInput{}
+		li := &athena.ListNamedQueriesInput{
+			WorkGroup: workGroupParam,
+		}
 		lo := &athena.ListNamedQueriesOutput{}
 		err = svc.ListNamedQueriesPages(li,
 			func(page *athena.ListNamedQueriesOutput, lastPage bool) bool {
