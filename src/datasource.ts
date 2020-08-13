@@ -122,21 +122,37 @@ export default class AwsAthenaDatasource extends DataSourceApi<AwsAthenaQuery, A
   metricFindQuery(query) {
     let region;
 
-    const namedQueryNamesQuery = query.match(/^named_query_names\(([^\)]+?)\)/);
+    const namedQueryNamesQuery = query.match(/^named_query_names\(([^\)]+?)(,\s?.+)?\)/);
     if (namedQueryNamesQuery) {
       region = namedQueryNamesQuery[1];
+      let workGroup = namedQueryNamesQuery[2];
+      if (workGroup) {
+        workGroup = workGroup.substr(1); //remove the comma
+        workGroup = workGroup.trim();
+      } else {
+        workGroup = null;
+      }
       return this.doMetricQueryRequest('named_query_names', {
         region: this.templateSrv.replace(region),
+        work_group: this.templateSrv.replace(workGroup),
       });
     }
 
-    const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?(.+)\)/);
+    const namedQueryQueryQuery = query.match(/^named_query_queries\(([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
     if (namedQueryQueryQuery) {
       region = namedQueryQueryQuery[1];
       const pattern = namedQueryQueryQuery[2];
+      let workGroup = namedQueryQueryQuery[3];
+      if (workGroup) {
+        workGroup = workGroup.substr(1); //remove the comma
+        workGroup = workGroup.trim();
+      } else {
+        workGroup = null;
+      }
       return this.doMetricQueryRequest('named_query_queries', {
         region: this.templateSrv.replace(region),
         pattern: this.templateSrv.replace(pattern, {}, 'regex'),
+        work_group: this.templateSrv.replace(workGroup),
       });
     }
 
@@ -161,7 +177,9 @@ export default class AwsAthenaDatasource extends DataSourceApi<AwsAthenaQuery, A
       });
     }
 
-    const queryExecutionIdsNamedQuery = query.match(/^query_execution_by_name\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/);
+    const queryExecutionIdsNamedQuery = query.match(
+      /^query_execution_by_name\(([^,]+?),\s?([^,]+?),\s?([^,]+)(,\s?.+)?\)/
+    );
     if (queryExecutionIdsNamedQuery) {
       region = queryExecutionIdsNamedQuery[1];
       const limit = queryExecutionIdsNamedQuery[2];
